@@ -1,0 +1,2 @@
+class SyncState < ApplicationRecord
+end

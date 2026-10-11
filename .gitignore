@@ -34,3 +34,4 @@
 /config/*.key
 
 rest.http
+.DS_Store

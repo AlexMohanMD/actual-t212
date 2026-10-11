@@ -1,0 +1,9 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  last_synced_at: 2026-10-11 12:38:29
+  last_balance: 9.99
+
+two:
+  last_synced_at: 2026-10-11 12:38:29
+  last_balance: 9.99

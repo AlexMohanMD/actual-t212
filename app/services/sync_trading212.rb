@@ -19,7 +19,8 @@ class SyncTrading212
     sleep(60)
     result = normalise_csv(get_csv_download(report_id))
     Rails.logger.info("Normalised CSV result: #{result}")
-    result
+    spending_pot_balance = get_spending_pot_balance
+    { csv_data: result, spending_pot_balance: spending_pot_balance }
   end
 
   def get_spending_pot_balance
@@ -64,9 +65,7 @@ class SyncTrading212
     response = t212request(uri, nil, :get)
 
     uri = URI(JSON.parse(response.body).find { |r| r["reportId"] == report_id }["downloadLink"])
-    response = amzrequest(uri)
-
-    response.body
+    amzrequest(uri)
   end
 
   private
@@ -99,7 +98,6 @@ class SyncTrading212
     response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == "https") do |http|
       http.request(request)
     end
-
-    response
+    response.body.force_encoding(Encoding::UTF_8)
   end
 end
