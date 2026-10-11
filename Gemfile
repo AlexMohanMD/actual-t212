@@ -65,6 +65,6 @@ group :test do
   gem "selenium-webdriver"
 end
 
-gem "solargraph", "~> 0.60.1", group: :Development
+gem "solargraph", "~> 0.61.0", group: :Development
 
 gem "csv", "~> 3.3"
