@@ -41,11 +41,36 @@ cp .env.example .env
 | `ACTUAL_ACCOUNT_NAME` | Alternative: Account name to resolve automatically via API | `Trading 212` |
 | `ACTUAL_BUDGET_ENCRYPTION_PASSWORD` | Optional encryption password if budget is encrypted | *(Optional)* |
 
+### Background Scheduling & Dashboard
+
+| Variable | Description | Default / Example |
+|---|---|---|
+| `SYNC_FREQUENCY` | Recurrence frequency for `SyncAllJob` | `daily` (`hourly`, `weekly`, or `every 6 hours`, `0 0 * * *`) |
+| `MISSION_CONTROL_USER` | Optional HTTP Basic Auth username for `/jobs` | *(Optional)* |
+| `MISSION_CONTROL_PASSWORD` | Optional HTTP Basic Auth password for `/jobs` | *(Optional)* |
+
+## Dashboard (Mission Control Jobs)
+
+The only web UI in the application is the **Mission Control Jobs** dashboard.
+- Navigating to `/` automatically redirects to `/jobs`.
+- Inspect job queues, in-progress runs, finished jobs, retries, and recurring schedules (`SyncAllJob`).
+- Optional HTTP Basic Authentication can be enabled by setting `MISSION_CONTROL_USER` and `MISSION_CONTROL_PASSWORD`.
+
+## Background Job & Recurring Scheduling
+
+`SyncAllJob` runs the `sync:all` rake task in the background using Active Job with Solid Queue.
+- It is scheduled automatically via `config/recurring.yml`.
+- The run frequency is controlled by the `SYNC_FREQUENCY` environment variable (default: `daily`).
+- When running Puma in single-server / development mode, Solid Queue supervisor runs automatically.
+
 ## Usage
 
 ### In Ruby Code
 
 ```ruby
+# Enqueue sync in background:
+SyncAllJob.perform_later
+
 # Sync all unsynced transactions from DB to Actual Budget:
 ActualClient.call
 # or:

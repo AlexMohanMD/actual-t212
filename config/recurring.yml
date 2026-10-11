@@ -1,15 +1,27 @@
-# examples:
-#   periodic_cleanup:
-#     class: CleanSoftDeletedRecordsJob
-#     queue: background
-#     args: [ 1000, { batch_size: 500 } ]
-#     schedule: every hour
-#   periodic_cleanup_with_command:
-#     command: "SoftDeletedRecord.due.delete_all"
-#     priority: 2
-#     schedule: at 5am every day
+<%
+  raw_frequency = ENV["SYNC_FREQUENCY"].presence || ENV["SYNC_SCHEDULE"].presence || "daily"
+  frequency_map = {
+    "daily"   => "every day",
+    "hourly"  => "every hour",
+    "weekly"  => "every week",
+    "monthly" => "every month"
+  }
+  schedule = frequency_map.fetch(raw_frequency.strip.downcase, raw_frequency.strip)
+%>
+
+default: &default
+  sync_all:
+    class: SyncAllJob
+    schedule: <%= schedule %>
+
+development:
+  <<: *default
+
+test:
+  <<: *default
 
 production:
+  <<: *default
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
