@@ -454,6 +454,7 @@ DEPENDENCIES
   capybara
   csv (~> 3.3)
   debug
+  dotenv
   image_processing (~> 1.2)
   importmap-rails
   jbuilder
@@ -471,7 +472,6 @@ DEPENDENCIES
   stimulus-rails
   thruster
   turbo-rails
-  tzinfo-data
   web-console
 
 CHECKSUMS
