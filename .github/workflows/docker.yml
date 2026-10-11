@@ -1,0 +1,75 @@
+name: Build and Publish Docker Image
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "v*.*.*" ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-push:
+    name: Build and Push to GHCR
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up mise
+        uses: jdx/mise-action@v5
+        with:
+          install: false
+
+      - name: Determine versions from mise.toml
+        id: mise
+        run: |
+          RUBY_REQ=$(mise config get tools.ruby 2>/dev/null || grep -E '^\s*ruby\s*=' mise.toml | sed -E 's/.*"([^"]+)".*/\1/' || echo "4.0.7")
+          if [ -z "$RUBY_REQ" ]; then
+            RUBY_REQ="4.0.7"
+          fi
+          RUBY_VERSION=$(mise latest "ruby@${RUBY_REQ}" 2>/dev/null || echo "$RUBY_REQ")
+          echo "ruby_version=${RUBY_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Determined Ruby version: ${RUBY_VERSION} (requested: ${RUBY_REQ})"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            RUBY_VERSION=${{ steps.mise.outputs.ruby_version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
