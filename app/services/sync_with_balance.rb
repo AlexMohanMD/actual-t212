@@ -47,7 +47,7 @@ class SyncWithBalance
         imported_id: transaction["ID"],
         amount: transaction["Total"],
         payee: transaction["Merchant name"],
-        notes: [transaction["Merchant category"], transaction["Notes"]].compact.join(" "),
+        notes: [ transaction["Merchant category"], transaction["Notes"] ].compact.join(" "),
         occurred_at: transaction["Time (UTC)"]
       )
     end
