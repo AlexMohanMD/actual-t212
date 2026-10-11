@@ -66,3 +66,5 @@ group :test do
 end
 
 gem "solargraph", "~> 0.60.1", group: :Development
+
+gem "csv", "~> 3.3"
