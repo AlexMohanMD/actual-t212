@@ -277,4 +277,46 @@ class ActualClientTest < ActiveSupport::TestCase
   test "ActualHttpClient subclasses ActualClient" do
     assert ActualHttpClient < ActualClient
   end
+
+  test "format_transaction uses transaction.imported_id when present" do
+    tx = Transaction.create!(
+      payee: "Costa",
+      amount: -3.20,
+      imported_id: "019e877b-ce80-7ed2-8736-12d0a0445f65"
+    )
+
+    formatted = @client.format_transaction(tx)
+    assert_equal "019e877b-ce80-7ed2-8736-12d0a0445f65", formatted[:imported_id]
+  end
+
+  test "get_account_balance and account_balance_amount return expected values" do
+    Net::HTTP.class_eval do
+      alias_method :orig_request, :request
+      define_method(:request) do |req|
+        if req.path.include?("/balance")
+          mock_res = Net::HTTPOK.new("1.1", 200, "OK")
+          mock_res.instance_variable_set(:@read, true)
+          def mock_res.body
+            { "data" => 45398 }.to_json
+          end
+          mock_res
+        else
+          orig_request(req)
+        end
+      end
+    end
+
+    begin
+      res = @client.get_account_balance
+      assert_equal({ "data" => 45398 }, res)
+
+      amount = @client.account_balance_amount
+      assert_equal BigDecimal("453.98"), amount
+    ensure
+      Net::HTTP.class_eval do
+        alias_method :request, :orig_request
+        remove_method :orig_request
+      end
+    end
+  end
 end

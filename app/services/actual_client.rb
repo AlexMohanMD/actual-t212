@@ -165,13 +165,34 @@ class ActualClient
     target_account = account_id || resolve_account_id
 
     query = {}
-    query[:since_date] = since_date if since_date
+    query[:since_date] = since_date || "1970-01-01"
     query[:until_date] = until_date if until_date
     query[:page] = page if page
     query[:limit] = limit if limit
 
     path = "/budgets/#{budget_sync_id}/accounts/#{target_account}/transactions"
     request(:get, path, query: query)
+  end
+
+  # Returns the balance of an account in minor units (e.g. { "data" => 45398 }).
+  # GET /budgets/{budgetSyncId}/accounts/{accountId}/balance
+  def get_account_balance(account_id: nil, cutoff_date: nil)
+    validate_credentials!
+    target_account = account_id || resolve_account_id
+
+    query = {}
+    query[:cutoff_date] = cutoff_date if cutoff_date
+
+    path = "/budgets/#{budget_sync_id}/accounts/#{target_account}/balance"
+    request(:get, path, query: query)
+  end
+
+  # Returns the account balance converted to decimal currency amount (e.g. 453.98).
+  def account_balance_amount(account_id: nil, cutoff_date: nil)
+    res = get_account_balance(account_id: account_id, cutoff_date: cutoff_date)
+    return nil unless res.is_a?(Hash) && res.key?("data")
+
+    BigDecimal(res["data"].to_s) / 100
   end
 
   # Returns accounts in the budget.
@@ -238,7 +259,7 @@ class ActualClient
       amount: amount_in_minor_units(transaction.amount),
       payee_name: transaction.payee.presence || "Unknown",
       notes: transaction.notes.presence,
-      imported_id: "t212-#{transaction.id}",
+      imported_id: transaction.imported_id.presence || "t212-#{transaction.id}",
       cleared: true
     }.compact
   end

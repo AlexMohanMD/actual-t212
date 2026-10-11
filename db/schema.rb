@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_11_120249) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_11_144454) do
   create_table "sync_states", force: :cascade do |t|
     t.datetime "last_synced_at"
     t.decimal "last_balance", precision: 12, scale: 2
@@ -26,5 +26,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_120249) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "occurred_at"
+    t.string "imported_id"
+    t.index ["imported_id"], name: "index_transactions_on_imported_id", unique: true
   end
 end
